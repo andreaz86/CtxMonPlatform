@@ -21,7 +21,7 @@ do
 {
     write-host "Waiting for CPX to become available"
     Start-Sleep -Seconds 5
-    $localip = invoke-restmethod -uri "http://consul:8500/v1/catalog/service/docker-elk_netscaler-9080" -ErrorAction Continue
+    $localip = invoke-restmethod -uri "http://consul:8500/v1/catalog/service/ctxmonplatform_netscaler-9080" -ErrorAction Continue
     $script:nsip = $localip[0].ServiceAddress
     $nsip_port=$nsip+":9080"
 
