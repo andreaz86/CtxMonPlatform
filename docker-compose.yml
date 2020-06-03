@@ -38,6 +38,7 @@ services:
       - elk
     depends_on:
       - elasticsearch
+
   logstash:
     build:
       context: logstash/
@@ -78,6 +79,7 @@ services:
       - elk
     depends_on:
       - elasticsearch
+
   netscaler:
     build:
       context: netscaler/
@@ -103,6 +105,7 @@ services:
     tty: true
     depends_on:
       - elasticsearch
+
   sidecar:
     build: ./sidecar
     image: sidecar
@@ -111,6 +114,8 @@ services:
     depends_on:
       - netscaler
       - consul-server-bootstrap
+
+
   consul-server-bootstrap:
     image:  consul:latest
     command: "agent -server -ui -client 0.0.0.0 -bootstrap-expect=3"
@@ -123,6 +128,7 @@ services:
     depends_on:
       - netscaler
       - elasticsearch
+
   consul-server-1:
     image:  consul:latest
     command: "agent -server -retry-join consul-server-bootstrap -client 0.0.0.0"
@@ -132,6 +138,7 @@ services:
           - consul
     depends_on:
       - consul-server-bootstrap
+
   consul-server-2:
     image:  consul:latest
     command: "agent -server -retry-join consul-server-bootstrap -client 0.0.0.0"
@@ -141,6 +148,7 @@ services:
           - consul
     depends_on:
       - consul-server-bootstrap
+
   registrator:
     image: gliderlabs/registrator:latest
     command: "-cleanup -resync 5 consul://consul-server-bootstrap:8500"

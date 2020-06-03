@@ -52,7 +52,7 @@ $script:Session =  Connect-Netscaler -Hostname $nsip_port -PassThru -Credential 
 write-host "Creating Servicegroup for CheckMK"
 New-NSLBServiceGroup -Name $SG -Protocol HTTP -Session $Session -ErrorAction Continue
 New-NSLBVirtualServer -Name $LB -IPAddress $localip[0].ServiceAddress -ServiceType HTTP -Session $Session -port $LBPORT -ErrorAction Continue
-$localip = invoke-restmethod -uri "http://consul:8500/v1/catalog/service/docker-elk_checkmk-5000" -ErrorAction Continue
+$localip = invoke-restmethod -uri "http://consul:8500/v1/catalog/service/ctxmonplatform_checkmk-5000" -ErrorAction Continue
 New-NSLBServer -Name checkmk -IPAddress $localip.ServiceAddress -Session $Session -ErrorAction Continue
 Enable-NSLBServer -Name checkmk -Force -Session $Session -ErrorAction Continue
 New-NSLBServiceGroupMember -Name $SG -ServerName checkmk -Session $Session -Port "5000" -ErrorAction Continue
