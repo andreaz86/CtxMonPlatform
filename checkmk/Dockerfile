@@ -1,0 +1,1 @@
+FROM checkmk/check-mk-raw:latest
