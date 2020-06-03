@@ -1,5 +1,4 @@
 version: '3.2'
-
 services:
   elasticsearch:
     build:
@@ -15,16 +14,30 @@ services:
         source: elasticsearch
         target: /usr/share/elasticsearch/data
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - '9200:9200'
+      - '9300:9300'
     environment:
-      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      ES_JAVA_OPTS: '-Xmx256m -Xms256m'
       ELASTIC_PASSWORD: changeme
-      # Use single node discovery in order to disable production mode and avoid bootstrap checks
-      # see https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
       discovery.type: single-node
     networks:
       - elk
+  kibana:
+    build:
+      context: kibana/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+      - type: bind
+        source: ./kibana/config/kibana.yml
+        target: /usr/share/kibana/config/kibana.yml
+        read_only: true
+    ports:
+      - '5601:5601'
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
 
   logstash:
     build:
@@ -49,28 +62,110 @@ services:
     networks:
       - elk
     depends_on:
-      - elasticsearch
-
-  kibana:
+      - elasticsearch      
+  checkmk:
     build:
-      context: kibana/
+      context: checkmk/
       args:
         ELK_VERSION: $ELK_VERSION
     volumes:
-      - type: bind
-        source: ./kibana/config/kibana.yml
-        target: /usr/share/kibana/config/kibana.yml
-        read_only: true
+      - type: volume
+        source: checkmk
+        target: /omd/sites
     ports:
-      - "5601:5601"
+      - '8080:5000'
+      - '6557:6557'
     networks:
       - elk
     depends_on:
       - elasticsearch
 
+  netscaler:
+    build:
+      context: netscaler/
+    volumes:
+      - type: volume
+        source: netscaler
+        target: /cpx
+    environment:
+      - EULA=yes
+      - CPX_CONFIG='{"YIELD":"Yes"}'
+    ports:
+      - '9443:9443'
+      - '22:22'
+      - '443:443'
+      - '80:80'
+      - '9080:9080'
+      - '88:88'
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - elk
+    tty: true
+    depends_on:
+      - elasticsearch
+
+  sidecar:
+    build: ./sidecar
+    image: sidecar
+    networks:
+      - elk
+    depends_on:
+      - netscaler
+      - consul-server-bootstrap
+
+
+  consul-server-bootstrap:
+    image:  consul:latest
+    command: "agent -server -ui -client 0.0.0.0 -bootstrap-expect=3"
+    networks:
+      elk:
+        aliases:
+          - consul
+    ports:
+      - "8500:8500"
+    depends_on:
+      - netscaler
+      - elasticsearch
+
+  consul-server-1:
+    image:  consul:latest
+    command: "agent -server -retry-join consul-server-bootstrap -client 0.0.0.0"
+    networks:
+      elk:
+        aliases:
+          - consul
+    depends_on:
+      - consul-server-bootstrap
+
+  consul-server-2:
+    image:  consul:latest
+    command: "agent -server -retry-join consul-server-bootstrap -client 0.0.0.0"
+    networks:
+      elk:
+        aliases:
+          - consul
+    depends_on:
+      - consul-server-bootstrap
+
+  registrator:
+    image: gliderlabs/registrator:latest
+    command: "-cleanup -resync 5 consul://consul-server-bootstrap:8500"
+    networks:
+      - elk
+    container_name: registrator
+    depends_on:
+      - consul-server-bootstrap
+      - consul-server-1
+      - consul-server-2
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+
 networks:
   elk:
     driver: bridge
-
 volumes:
-  elasticsearch:
+  elasticsearch: null
+  checkmk: null
+  netscaler: null
