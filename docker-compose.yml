@@ -144,6 +144,22 @@ services:
     depends_on:
       - consul-server-bootstrap
 
+  portainer:
+    image:  portainer/portainer:latest
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock  
+      - type: volume
+        source: portainer
+        target: /data  
+    ports:
+      - '9000:9000'
+    networks:
+      - elk
+
+
+
   consul-server-2:
     image:  consul:latest
     command: "agent -server -retry-join consul-server-bootstrap -client 0.0.0.0"
@@ -174,3 +190,4 @@ volumes:
   elasticsearch: null
   checkmk: null
   netscaler: null
+  portainer: null
