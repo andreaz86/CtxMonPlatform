@@ -109,6 +109,11 @@ services:
   sidecar:
     build: ./sidecar
     image: sidecar
+    volumes:
+      - type: bind
+        source: ./sidecar/cpx_tmp.ps1
+        target: /tmp/cpx_tmp.ps1
+        read_only: true
     networks:
       - elk
     depends_on:
