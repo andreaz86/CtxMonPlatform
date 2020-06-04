@@ -1,0 +1,46 @@
+heartbeat.monitors:
+- type: icmp
+  schedule: '*/5 * * * * * *'
+  hosts: ["elasticsearch","kibana","checkmk","portainer"]
+  ipv4: true
+  ipv6: false
+  mode: any
+  timeout: 3s
+  wait: 1s
+
+
+#Monitor the Elasticsearch instance.
+- type: http
+  enabled: true
+  schedule: '@every 5s'
+  urls: ["http://elasticsearch:9200"]
+  ipv4: true
+  ipv6: false
+  mode: any
+  timeout: 3s
+  username: elastic
+  password: changeme
+  check.request:
+    method: "GET"
+  check.response:
+    status: 200
+
+
+#Monitor the Kibana instance.
+- type: http
+  enabled: true
+  schedule: '@every 5s'
+  urls: ["http://kibana:5601"]
+  ipv4: true
+  ipv6: false
+  mode: any
+  timeout: 3s
+  check.request:
+    method: "GET"
+  check.response:
+    status: 302
+    
+output.elasticsearch:
+  hosts: elasticsearch:9200
+  username: elastic
+  password: changeme

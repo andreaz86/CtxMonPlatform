@@ -1,4 +1,4 @@
-version: '3.2'
+version: '3.9'
 services:
   elasticsearch:
     build:
@@ -52,7 +52,7 @@ services:
       - type: bind
         source: ./logstash/pipeline
         target: /usr/share/logstash/pipeline
-        read_only: true
+        read_only: true    
     ports:
       - "5000:5000/tcp"
       - "5000:5000/udp"
@@ -87,6 +87,10 @@ services:
       - type: volume
         source: netscaler
         target: /cpx
+      - type: bind
+        source: ./etc/cpx.conf
+        target: /etc/cpx.conf
+        read_only: true
     environment:
       - EULA=yes
       - CPX_CONFIG='{"YIELD":"Yes"}'
@@ -155,6 +159,41 @@ services:
         target: /data  
     ports:
       - '9000:9000'
+    networks:
+      - elk
+
+  heartbeat:
+    build:
+      context: heartbeat/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    environment:
+      - output.elasticsearch.hosts= elasticsearch:9200
+      - setup.kibana.host= kibana:5601
+    user: root
+    volumes:
+      - type: bind
+        source: ./heartbeat/heartbeat.yml
+        target: /usr/share/heartbeat/heartbeat.yml 
+        read_only: true
+    depends_on:
+      - heartbeat_setup
+    command: heartbeat -e -strict.perms=false
+    networks:
+      - elk
+
+  heartbeat_setup:
+    build:
+      context: heartbeat/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    environment:
+      - output.elasticsearch.hosts= elasticsearch:9200
+      - setup.kibana.host= kibana:5601
+    user: root
+    depends_on:
+      - elasticsearch
+    command: setup
     networks:
       - elk
 
