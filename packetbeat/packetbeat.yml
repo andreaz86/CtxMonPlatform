@@ -35,7 +35,7 @@ packetbeat.protocols.cassandra:
 
 
 output.elasticsearch:
-  hosts: elasticsearch:9200
+  hosts: localhost:9200
   username: elastic
   password: changeme
   
@@ -43,5 +43,5 @@ output.elasticsearch:
   
   
 setup:
-  kibana.host: "kibana:5601"
+  kibana.host: localhost:5601
   dashboards.enabled: true

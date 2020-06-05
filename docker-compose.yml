@@ -228,12 +228,12 @@ services:
 
   packetbeat:
     build:
-      context: metricbeat/
+      context: packetbeat/
       args:
         ELK_VERSION: $ELK_VERSION
     environment:
-      - output.elasticsearch.hosts= elasticsearch:9200
-      - setup.kibana.host= kibana:5601
+      - output.elasticsearch.hosts= localhost:9200
+      - setup.kibana.host= localhost:5601
     user: root
     volumes:
       - type: bind

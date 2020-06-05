@@ -24,8 +24,6 @@ metricbeat.modules:
   period: 10s
   enabled: true
 
-processors:
-  - add_cloud_metadata: ~
  
 output.elasticsearch:
   hosts: elasticsearch:9200
