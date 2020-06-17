@@ -53,14 +53,20 @@ Enable-NSFeature -name RESPONDER -Force
 #################   SERVICE GROUP   #########################
 write-host "Creating Servicegroup"
 New-NSLBServiceGroup -Name "SG_CHECKMK" -Protocol HTTP -Session $Session -ErrorAction Continue -State ENABLED
+write-host "SG_CHECKMK"
 New-NSLBServiceGroup -Name "SG_KIBANA" -Protocol HTTP -Session $Session -ErrorAction Continue -State ENABLED
+write-host "SG_KIBANA"
 New-NSLBServiceGroup -Name "SG_PORTAINER" -Protocol HTTP -Session $Session -ErrorAction Continue -State ENABLED
+write-host "SG_PORTAINER"
 
 #################   VIRTUAL SERVER ###########################
 write-host "Creating VirtualServer"
 New-NSLBVirtualServer -Name "VS_CHECKMK" -ServiceType HTTP -NonAddressable -Session $Session 
+write-host "VS_CHECKMK"
 New-NSLBVirtualServer -Name "VS_KIBANA" -ServiceType HTTP -NonAddressable -Session $Session 
+write-host "VS_KIBANA"
 New-NSLBVirtualServer -Name "VS_PORTAINER" -ServiceType HTTP -NonAddressable -Session $Session 
+write-host "VS_PORTAINER"
 
 ################    SERVER  ################################
 write-host "Creating Server:"
@@ -76,19 +82,30 @@ New-NSLBServer -Name PORTAINER -IPAddress $portainer[0].ServiceAddress -Session 
 ##############  ADD SERVER TO SERVICEGROUP  ########################
 write-host "Adding server to ServiceGroup:"
 New-NSLBServiceGroupMember -Name SG_CHECKMK -ServerName CHECKMK -Session $Session -Port "5000" -ErrorAction SilentlyContinue
+write-host "CHECKMK Server added to SG_CHECKMK ServiceGroup"
 New-NSLBServiceGroupMember -Name SG_KIBANA -ServerName KIBANA -Session $Session -Port 5601 -ErrorAction SilentlyContinue
+write-host "KIBANA Server added to SG_KIBANA ServiceGroup"
 New-NSLBServiceGroupMember -Name SG_PORTAINER -ServerName PORTAINER -Session $Session -Port 9000 -ErrorAction SilentlyContinue
+write-host "PORTAINER Server added to SG_PORTAINER ServiceGroup"
 
 ############### ADD SERVICEGROUP TO VSERVER #######################
+write-host "Adding servicegroup to Virtual Server:"
 Add-NSLBVirtualServerBinding -VirtualServerName VS_CHECKMK -ServiceGroupName SG_CHECKMK -Session $Session -ErrorAction Continue
+write-host "SG_CHECKMK added to VS_CHECKMK"
 Add-NSLBVirtualServerBinding -VirtualServerName VS_KIBANA -ServiceGroupName SG_KIBANA -Session $Session -ErrorAction Continue
+write-host "SG_KIBANA added to VS_KIBANA"
 Add-NSLBVirtualServerBinding -VirtualServerName VS_PORTAINER -ServiceGroupName SG_PORTAINER -Session $Session -ErrorAction Continue
+write-host "SG_PORTAINER added to VS_PORTAINER"
 
 ############### CREATING CONTENT SWITCHING  #######################
+write-host "Creating Content switching vServer:"
 New-NSCSVirtualServer -Name CS_HTTP -Session $Session -IPAddress $localip[0].ServiceAddress -Port 80 -ServiceType HTTP -State ENABLED
+write-host "Created server on port 80"
 New-NSCSVirtualServer -Name CS_HTTPS -Session $Session -IPAddress $localip[0].ServiceAddress -Port 443 -ServiceType SSL -State ENABLED
+write-host "Created server on port 443"
 
 ############### CREATING CS POLICY  ############################
+write-host "Creating Content switching policy:"
 New-NSCSPolicy -Name CS_POL_CHECKMK -Rule 'HTTP.REQ.HOSTNAME.EQ("checkmk.lab.local")'
 New-NSCSPolicy -Name CS_POL_KIBANA -Rule 'HTTP.REQ.HOSTNAME.EQ("kibana.lab.local")'
 New-NSCSPolicy -Name CS_POL_PORTAINER -Rule 'HTTP.REQ.HOSTNAME.EQ("portainer.lab.local")'
